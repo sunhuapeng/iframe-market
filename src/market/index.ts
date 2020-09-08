@@ -47,19 +47,21 @@ class Market {
         window.addEventListener("resize", () => { this.onWindowResized(); }, false);
     }
     renderFloor() {
+        const datalength = this.floorData.length
+        const helfLength = Math.ceil(datalength / 2)
         const interFloor = setInterval(() => {
-            if (this.loadFloorIndex < this.floorData.length) {
+            if (this.loadFloorIndex < datalength) {
                 const floor = this.floorData[this.loadFloorIndex]
                 new LoadGltf(floor.url)
                     .create()
                     .then((scene: any) => {
                         scene.name = floor.name
-                        const index = this.loadFloorIndex - Math.floor(this.floorData.length / 2) - 1
+                        const index = (this.loadFloorIndex + 1) - helfLength
                         const y = this.floorHeight * index
                         const floorCp = new THREE.Vector3(0, y, 0)
                         scene.position.copy(floorCp)
-                        console.log(this.loadFloorIndex)
                         if (this.loadFloorIndex === 0) {
+                            // 根据第一层计算相机位置，将所有楼层适配显示到屏幕
                             const ground = scene.getObjectByName('floor')
                             const size = new THREE.Vector3()
                             this.$getBox.getbox(ground).getSize(size)
@@ -68,8 +70,7 @@ class Market {
                             const b = size.z
                             // 求斜边
                             const c = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2))
-                            console.log(c, '斜边')
-                            this.camera.position.set(c,100,c)
+                            this.camera.position.set(c + Math.min(datalength,4) * 50, Math.min(helfLength,4) * this.floorHeight, c + Math.min(datalength,4) * 50)
                         }
                         this.floorGroup.add(scene)
                         this.loadFloorIndex++
