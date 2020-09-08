@@ -6,7 +6,7 @@ document.documentElement.style.fontSize = Math.min(window.innerWidth, 750) / 750
 let isMobile: any = /Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent);
 const loading: any = document.querySelector('.loading')
 if (!isMobile) {
-    document.body.style.width = '750px'
+    // document.body.style.width = '750px'
 }
 
 // 引入three文件
@@ -18,4 +18,3 @@ const mkt: any = new Market.default()
 
 win.mkt = mkt
 mkt.render()
-console.log(4)

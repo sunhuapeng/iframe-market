@@ -5,15 +5,15 @@ const THREE = require("three");
 import { CSS2DRenderer } from "../../node_modules/three/examples/jsm/renderers/CSS2DRenderer";
 import { OrbitControls } from "../../node_modules/three/examples/jsm/controls/OrbitControls";
 // 屏幕宽度
-const width = document.body.offsetWidth;
+const width = window.innerWidth;
 // 屏幕高度
-const height = document.body.offsetHeight;
+const height = window.innerHeight;
 // 3d容器
 const container = document.body;
 // 视锥尺寸
 const frustumSize = 1000
 // 镜头默认角度
-const CameraDefaultPosition = new THREE.Vector3(0, 500, 0);
+let CameraDefaultPosition
 // 创建场景
 export function initScene() {
   let scene: any
@@ -27,8 +27,12 @@ export function initScene() {
 // 创建摄像机
 export function initCamera() {
   let camera: any
-  // camera = new THREE.PerspectiveCamera(45, width / height, 1, 5000);
-  camera = new THREE.OrthographicCamera(width / - 4, width / 4, height / 4, height / - 4, 1, 5000);
+  camera = new THREE.PerspectiveCamera(45, width / height, 1, 5000);
+  // camera = new THREE.OrthographicCamera(width / - 4, width / 4, height / 4, height / - 4, 1, 5000);
+  // console.log(a=√2c/2)
+  const viewWidth = Math.sqrt(2*height)/2
+  console.log(viewWidth)
+  CameraDefaultPosition = new THREE.Vector3(viewWidth + 700, height/2, viewWidth + 700);
   camera.position.copy(CameraDefaultPosition);
   return camera
 }
@@ -74,7 +78,7 @@ export function initControls(camera: any, renderer: any) {
   // controls.target = new THREE.Vector3(100, 0, 100)
   // controls.enableDamping = true;
   // controls.dampingFactor = 0.5;
-  // controls.screenSpacePanning = true;
+  controls.screenSpacePanning = true;
   // 缩放
   // 楼层  2.1
   // 店铺  4

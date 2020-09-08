@@ -1,4 +1,8 @@
 import { initScene, initCamera, initRenderer, initRenderer2D, initControls, initAmbientLight, initDirectional, helper, spotLight, spotLightHelper, box, back } from '../createThreeScene/index'
+import { LoadGltf } from '../loader/index'
+import { GetFloor } from '../api/requery'
+import GetBox from '../tools/getBox'
+
 const THREE = require("three");
 class Market {
     private scene: any //场景
@@ -6,33 +10,80 @@ class Market {
     private renderer: any; //渲染器
     private controls: any; //控制器
     private labelRenderer: any; //2d渲染器
-    private Lead: any //被控制的主角
+    private floorData: any = []; // 楼层数据
+    private floorGroup: any; // 楼层数据
+    private loadFloorIndex: number = 0
+    floorHeight: number = 50
+    $getBox: any = new GetBox()
     constructor() {
         this.created()
+
     }
-    created() {
+    async created() {
         // 创建场景
         this.scene = initScene()
         this.camera = initCamera()
         this.renderer = initRenderer()
         this.labelRenderer = initRenderer2D()
         this.controls = initControls(this.camera, this.renderer);
+        this.controls.addEventListener('change', () => {
+            console.log(this.camera.position)
+        });
         // this.scene.add(initDirectional())
         this.scene.add(initAmbientLight())
         const spotL = spotLight()
         this.scene.add(spotL)
         this.scene.add(spotLightHelper(spotL))
         this.scene.add(helper())
-        // this.scene.add(back())
-        // new MadeMap()
-        // 创建主角
-        // this.Lead = new CreateLead(this.scene, this.camera, this.controls)
-        // this.Lead.create()
-        // this.Lead.createEndPoint()
-        // document.addEventListener('keydown', () => {
-        //     this.onKeyDown(event)
-        // }, false);
+        this.floorGroup = new THREE.Group()
+        this.floorGroup.name = 'floorgroup'
+        this.scene.add(this.floorGroup)
+        // 获取数据
+        await this.getFloor()
+        console.log('楼层数据', this.floorData)
+        // 计算每层楼之间的距离
+        this.floorHeight = window.innerHeight / Math.max(10, this.floorData.length)
+        this.renderFloor()
         window.addEventListener("resize", () => { this.onWindowResized(); }, false);
+    }
+    renderFloor() {
+        const interFloor = setInterval(() => {
+            if (this.loadFloorIndex < this.floorData.length) {
+                const floor = this.floorData[this.loadFloorIndex]
+                new LoadGltf(floor.url)
+                    .create()
+                    .then((scene: any) => {
+                        scene.name = floor.name
+                        const index = this.loadFloorIndex - Math.floor(this.floorData.length / 2) - 1
+                        const y = this.floorHeight * index
+                        const floorCp = new THREE.Vector3(0, y, 0)
+                        scene.position.copy(floorCp)
+                        console.log(this.loadFloorIndex)
+                        if (this.loadFloorIndex === 0) {
+                            const ground = scene.getObjectByName('floor')
+                            const size = new THREE.Vector3()
+                            this.$getBox.getbox(ground).getSize(size)
+                            // 两条直角边
+                            const a = size.x
+                            const b = size.z
+                            // 求斜边
+                            const c = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2))
+                            console.log(c, '斜边')
+                            this.camera.position.set(c,100,c)
+                        }
+                        this.floorGroup.add(scene)
+                        this.loadFloorIndex++
+                        this.renderFloor()
+                    })
+            }
+            clearInterval(interFloor)
+        }, 300)
+    }
+    async getFloor() {
+        // 异步请求
+        await GetFloor('./static/json/floor.json').then((res: any) => {
+            this.floorData = res
+        })
     }
     onWindowResized() {
         var aspect = window.innerWidth / window.innerHeight;
