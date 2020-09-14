@@ -2,7 +2,7 @@ import { initScene, initCamera, initRenderer, initRenderer2D, initControls, init
 import { LoadGltf } from '../loader/index'
 import { GetFloor } from '../api/requery'
 import GetBox from '../tools/getBox'
-
+import { memberMaterial } from '../material/index'
 const THREE = require("three");
 class Market {
     private scene: any //场景
@@ -15,6 +15,8 @@ class Market {
     private loadFloorIndex: number = 0
     floorHeight: number = 50
     $getBox: any = new GetBox()
+    // 待开发。底板。卫生间。电梯。扶梯
+    private flagMember: string[] = ['dev', 'floor', 'toilet', 'elevator', 'escalator',]
     constructor() {
         this.created()
 
@@ -27,7 +29,7 @@ class Market {
         this.labelRenderer = initRenderer2D()
         this.controls = initControls(this.camera, this.renderer);
         this.controls.addEventListener('change', () => {
-            console.log(this.camera.position)
+            // console.log(this.camera.position)
         });
         // this.scene.add(initDirectional())
         this.scene.add(initAmbientLight())
@@ -59,7 +61,11 @@ class Market {
                         const index = (this.loadFloorIndex + 1) - helfLength
                         const y = this.floorHeight * index
                         const floorCp = new THREE.Vector3(0, y, 0)
-                        scene.position.copy(floorCp)
+                        scene.position.copy(floorCp),
+                            scene.y = y
+                        scene.traverse((obj: any) => {
+                            this.bindMember(obj)
+                        })
                         if (this.loadFloorIndex === 0) {
                             // 根据第一层计算相机位置，将所有楼层适配显示到屏幕
                             const ground = scene.getObjectByName('floor')
@@ -70,7 +76,7 @@ class Market {
                             const b = size.z
                             // 求斜边
                             const c = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2))
-                            this.camera.position.set(c + Math.min(datalength,4) * 50, Math.min(helfLength,4) * this.floorHeight, c + Math.min(datalength,4) * 50)
+                            this.camera.position.set(c + Math.min(datalength, 4) * 50, Math.min(helfLength, 4) * this.floorHeight, c + Math.min(datalength, 4) * 50)
                         }
                         this.floorGroup.add(scene)
                         this.loadFloorIndex++
@@ -79,6 +85,17 @@ class Market {
             }
             clearInterval(interFloor)
         }, 300)
+    }
+    bindMember(obj: any) {
+        if (this.flagMember.indexOf(obj.name.split('_')[0]) === -1 && obj.isMesh) {
+            console.log(obj)
+            const v3 = new THREE.Vector3()
+            this.$getBox.getbox(obj).getCenter(v3)
+            // console.log(v3)
+            obj.material = memberMaterial
+            console.log(Math.floor(v3.x) + "," + Math.floor(v3.z))
+
+        }
     }
     async getFloor() {
         // 异步请求
