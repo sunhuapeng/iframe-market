@@ -97,12 +97,14 @@ export function initControls(camera: any, renderer: any) {
 }
 // 初始化平行光
 export function initAmbientLight() {
-  const AmbientLight = new THREE.AmbientLight(0xffffff, 1);
+  const AmbientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  AmbientLight.position.set(20, 40, 20)
   return AmbientLight
 }
+
 export function initDirectional() {
   var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-  directionalLight.position.set(0, 2000, 0)
+  directionalLight.position.set(200, 400, 200)
   return directionalLight
 }
 export function spotLight() {
