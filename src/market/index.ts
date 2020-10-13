@@ -1,8 +1,8 @@
 import { initScene, initCamera, initRenderer, initRenderer2D, initControls, initAmbientLight, initDirectional, helper, spotLight, spotLightHelper, box, back } from '../createThreeScene/index'
 import { LoadGltf } from '../loader/index'
-import { GetFloor } from '../api/requery'
+import { GetFloor, GetMember } from '../api/requery'
 import GetBox from '../tools/getBox'
-import { memberMaterial } from '../material/index'
+import { memberMaterial, floorMaterial } from '../material/index'
 // import { MeshBasicMaterial } from '../../node_modules/three/examples/jsm/'
 const THREE = require("three");
 class Market {
@@ -95,15 +95,33 @@ class Market {
         }, 300)
     }
 
-    bindMember(scene: any) {
-        scene.traverse(obj => {
-            console.log(obj)
-            if (this.flagMember.indexOf(obj.name.split('_')[0]) === -1 && obj.isMesh) {
-                const v3 = new THREE.Vector3()
-                this.$getBox.getbox(obj).getCenter(v3)
-                obj.material = memberMaterial()
-            }
+    async bindMember(scene: any) {
+        await GetMember('./static/json/member.json').then((res: any) => {
+            console.log('房间数据', res)
+            scene.traverse(obj => {
+                if (this.flagMember.indexOf(obj.name.split('_')[0]) === -1 && obj.isMesh) {
+                    const v3 = new THREE.Vector3()
+                    this.$getBox.getbox(obj).getCenter(v3)
+                    // console.log(v3.x + '' + v3.y)
+                    const cp = Math.floor(v3.x) + ',' + Math.floor(v3.z)
+
+                    res.forEach((member: any) => {
+                        if (member.coordinates === cp) {
+                            obj.material = memberMaterial()
+                            this.createMemberName(member)
+                        }
+                    });
+                } else {
+                    if (obj.name.split('_')[0].indexOf('floor') !== -1) {
+                        obj.material = floorMaterial()
+                    }
+                }
+            })
         })
+    }
+    createMemberName(data) {
+        console.log(data.name)
+        
     }
     async getFloor() {
         // 异步请求

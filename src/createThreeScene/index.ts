@@ -103,7 +103,7 @@ export function initAmbientLight() {
 }
 
 export function initDirectional() {
-  var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
   directionalLight.position.set(200, 400, 200)
   return directionalLight
 }
