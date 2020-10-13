@@ -18,7 +18,7 @@ let CameraDefaultPosition
 export function initScene() {
   let scene: any
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x374b79); //场景背景色
+  scene.background = new THREE.Color(0x01193e); //场景背景色
   // scene.position.setZ(-200)
   // scene.position.setX(-200)
   // scene.rotation.y = Math.PI * 1.5
@@ -103,7 +103,7 @@ export function initAmbientLight() {
 }
 
 export function initDirectional() {
-  var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
   directionalLight.position.set(200, 400, 200)
   return directionalLight
 }

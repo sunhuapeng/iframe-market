@@ -2,7 +2,7 @@ import { initScene, initCamera, initRenderer, initRenderer2D, initControls, init
 import { LoadGltf } from '../loader/index'
 import { GetFloor, GetMember } from '../api/requery'
 import GetBox from '../tools/getBox'
-import { memberMaterial, floorMaterial } from '../material/index'
+import { memberMaterial, nomemberMaterial, DrawLine, floorMaterial } from '../material/index'
 // import { MeshBasicMaterial } from '../../node_modules/three/examples/jsm/'
 const THREE = require("three");
 class Market {
@@ -33,22 +33,11 @@ class Market {
             // console.log(this.camera.position)
         });
         const directional = initDirectional()
-        // var directionalhelper = new THREE.DirectionalLightHelper( directional, 5 );
         this.scene.add(directional);
-        // this.scene.add( directionalhelper );
+
         this.scene.add(initAmbientLight())
-        // const spotL = spotLight()
-        // this.scene.add(spotL)
-        // this.scene.add(spotLightHelper(spotL))
-        // this.scene.add(helper())
         this.floorGroup.name = 'floorgroup'
         this.scene.add(this.floorGroup)
-
-        // var light = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
-        // var lighthelper = new THREE.HemisphereLightHelper(light, 500);
-        // this.scene.add(light);
-        // this.scene.add(lighthelper);
-
         // 获取数据
         await this.getFloor()
         console.log('楼层数据', this.floorData)
@@ -102,15 +91,23 @@ class Market {
                 if (this.flagMember.indexOf(obj.name.split('_')[0]) === -1 && obj.isMesh) {
                     const v3 = new THREE.Vector3()
                     this.$getBox.getbox(obj).getCenter(v3)
-                    // console.log(v3.x + '' + v3.y)
                     const cp = Math.floor(v3.x) + ',' + Math.floor(v3.z)
-
-                    res.forEach((member: any) => {
-                        if (member.coordinates === cp) {
-                            obj.material = memberMaterial()
-                            this.createMemberName(member)
+                    var line = new THREE.Geometry();
+                    for (let i = 0; i < res.length; i++) {
+                        scene.add(line)
+                        let member = res[i]
+                        if (!obj.memberId) {
+                            if (member.coordinates === cp) {
+                                obj.material = memberMaterial()
+                                line = DrawLine(obj, 0.5, 0x2fafe1);
+                                obj.memberId = member.id
+                                this.createMemberName(member)
+                            } else {
+                                obj.material = nomemberMaterial()
+                                line = DrawLine(obj, 0.5, 0x652ab8);
+                            }
                         }
-                    });
+                    }
                 } else {
                     if (obj.name.split('_')[0].indexOf('floor') !== -1) {
                         obj.material = floorMaterial()
@@ -120,8 +117,8 @@ class Market {
         })
     }
     createMemberName(data) {
-        console.log(data.name)
-        
+        // console.log(data.name)
+
     }
     async getFloor() {
         // 异步请求

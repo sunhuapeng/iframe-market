@@ -1,3 +1,9 @@
+/*
+ * @Author: sunhuapeng
+ * @Date: 2020-10-13 19:46:31
+ * @LastEditors: sunhuapeng
+ * @LastEditTime: 2020-10-13 20:28:02
+ */
 const path = require("path");
 const pluginsConfig = require("./webpack.plugins.js");
 module.exports = {
@@ -42,7 +48,7 @@ module.exports = {
     ]
   },
   devServer: {
-    host: "192.168.1.82",
+    host: "localhost",
     port: "8080",
     disableHostCheck: true // 取消host检查
   },
