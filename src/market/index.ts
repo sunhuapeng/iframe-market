@@ -3,6 +3,8 @@ import { LoadGltf } from '../loader/index'
 import { GetFloor, GetMember } from '../api/requery'
 import GetBox from '../tools/getBox'
 import { memberMaterial, nomemberMaterial, DrawLine, floorMaterial } from '../material/index'
+import { createText, pointRay } from '../tools/public'
+import { threadId } from 'worker_threads'
 // import { MeshBasicMaterial } from '../../node_modules/three/examples/jsm/'
 const THREE = require("three");
 class Market {
@@ -15,6 +17,8 @@ class Market {
     private floorGroup: any = new THREE.Group(); // 楼层数据
     private loadFloorIndex: number = 0
     floorHeight: number = 50
+    nameRayList = []
+    groundRayArr = []
     $getBox: any = new GetBox()
     // 待开发。底板。卫生间。电梯。扶梯
     private flagMember: string[] = ['dev', 'floor', 'toilet', 'elevator', 'escalator',]
@@ -32,6 +36,7 @@ class Market {
         this.controls.addEventListener('change', () => {
             // console.log(this.camera.position)
         });
+        this.controls.addEventListener("change", this.rayText.bind(this));
         const directional = initDirectional()
         this.scene.add(directional);
 
@@ -94,14 +99,16 @@ class Market {
                     const cp = Math.floor(v3.x) + ',' + Math.floor(v3.z)
                     var line = new THREE.Geometry();
                     for (let i = 0; i < res.length; i++) {
-                        scene.add(line)
+                        // scene.add(line)
                         let member = res[i]
                         if (!obj.memberId) {
                             if (member.coordinates === cp) {
                                 obj.material = memberMaterial()
                                 line = DrawLine(obj, 0.5, 0x2fafe1);
                                 obj.memberId = member.id
-                                this.createMemberName(member)
+                                var memberName = createText(member.name, v3)
+                                this.nameRayList.push(memberName)
+                                obj.add(memberName)
                             } else {
                                 obj.material = nomemberMaterial()
                                 line = DrawLine(obj, 0.5, 0x652ab8);
@@ -110,20 +117,30 @@ class Market {
                     }
                 } else {
                     if (obj.name.split('_')[0].indexOf('floor') !== -1) {
+                        this.groundRayArr.push(obj)
                         obj.material = floorMaterial()
                     }
                 }
             })
         })
     }
-    createMemberName(data) {
-        // console.log(data.name)
 
-    }
     async getFloor() {
         // 异步请求
         await GetFloor('./static/json/floor.json').then((res: any) => {
             this.floorData = res
+        })
+    }
+    rayText(){
+        // console.log(this.floorGroup)
+        this.floorGroup.traverse((mesh)=>{
+            if(mesh.isType === '2'){
+                const textWorldV3 = new THREE.Vector3()
+                mesh.getWorldPosition(textWorldV3)
+                const opt = pointRay(this.camera.position, textWorldV3, this.groundRayArr);
+                // console.log(Number(!opt).toString())
+                mesh.element.style.opacity = Number(!opt).toString();
+            }
         })
     }
     onWindowResized() {

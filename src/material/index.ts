@@ -1,4 +1,5 @@
 const THREE = require("three");
+// 店铺
 export function memberMaterial() {
     return new THREE.MeshPhongMaterial({
         color: '#181366',
@@ -6,6 +7,7 @@ export function memberMaterial() {
         opacity: 0.4
     });
 }
+// 底板
 export function floorMaterial() {
     return new THREE.MeshPhongMaterial({
         color: '#3c35f3',
@@ -13,6 +15,7 @@ export function floorMaterial() {
         opacity: 0.6
     });
 }
+// 空店铺
 export function nomemberMaterial() {
     return new THREE.MeshPhongMaterial({
         color: '#131640',
@@ -20,7 +23,7 @@ export function nomemberMaterial() {
         opacity: 0.2
     });
 }
-// 线的材质
+// 店铺的线
 export function DrawLine(dom, opacity, color, count?) {
     if (dom.isMesh) {
         var edges = new THREE.EdgesGeometry(dom.geometry, count ? count : 10);
