@@ -63,8 +63,7 @@ class Market {
                         scene.name = floor.name
                         const index = (this.loadFloorIndex + 1) - helfLength
                         const y = this.floorHeight * index
-                        const floorCp = new THREE.Vector3(0, y, 0)
-                        scene.y = y
+                        scene.position.y = y
                         this.bindMember(scene)
 
                         this.floorGroup.add(scene)
@@ -106,7 +105,9 @@ class Market {
                                 obj.material = memberMaterial()
                                 line = DrawLine(obj, 0.5, 0x2fafe1);
                                 obj.memberId = member.id
-                                var memberName = createText(member.name, v3)
+                                let nameV3 = v3.clone().setY(0)
+                                var memberName = createText(member.name, nameV3)
+                                memberName.position.setY(5)
                                 this.nameRayList.push(memberName)
                                 obj.add(memberName)
                             } else {
@@ -131,10 +132,9 @@ class Market {
             this.floorData = res
         })
     }
-    rayText(){
-        // console.log(this.floorGroup)
-        this.floorGroup.traverse((mesh)=>{
-            if(mesh.isType === '2'){
+    rayText() {
+        this.floorGroup.traverse((mesh) => {
+            if (mesh.isType === '2') {
                 const textWorldV3 = new THREE.Vector3()
                 mesh.getWorldPosition(textWorldV3)
                 const opt = pointRay(this.camera.position, textWorldV3, this.groundRayArr);

@@ -27,18 +27,11 @@ export function pointRay(star, end, children) {
   );
   // console.log(intersects[0].point.length())
   // console.log(end.length())
-  let leng1 = 0
-  let leng2 = 0
-  if (intersects[0]) {
-    // 从相机到交叉点的距离
-    leng1 = intersects[0].point.length()
-    // 从相机到文字的距离
-    leng2 = end.length()
-    // console.log(intersects[0].point, end)
-    console.log(leng1 < leng2)
-    // console.log(star.length(intersects[0].point))
-    // console.log(intersects[0].point)
-    // console.log(intersects[0].point.length() > end.length())
+  let jclang = 0
+  let textlang = 0
+  if (intersects.length != 0) {
+    jclang = star.distanceTo(intersects[0].point)
+    textlang = star.distanceTo(end)
   }
-  return !(leng1 < leng2);
+  return jclang<textlang;
 }
