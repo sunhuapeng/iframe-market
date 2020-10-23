@@ -23,6 +23,22 @@ export function nomemberMaterial() {
         opacity: 0.2
     });
 }
+// 电梯的材质
+export function elevatorMaterial() {
+    return new THREE.MeshPhongMaterial({
+        color: '#017580',
+        transparent: true,
+        opacity: 0.3
+    });
+}
+// 点亮店铺的颜色
+export function LightMemberMaterial() {
+    return new THREE.MeshPhongMaterial({
+        color: '#f14f54',
+        transparent: true,
+        opacity: 0.3
+    });
+}
 // 店铺的线
 export function DrawLine(dom, opacity, color, count?) {
     if (dom.isMesh) {
