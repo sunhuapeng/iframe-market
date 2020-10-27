@@ -104,9 +104,10 @@ export function createMyPosition(_this) {
   let mySelf = null
   for(let i=0; i<_this.floorGroup.children.length; i++) {
     let floor = _this.floorGroup.children[i]
-    if(floor.name === 'F1'){
+    if(floor.name === 'F2'){
       let index = getRandomInt(0, floor.userData.trailPoint.length)
       let v3 = floor.userData.trailPoint[index]
+      console.log('v3', v3)
         let sprite = create2dImg(v3)
         sprite.name = 'mySelf'
         sprite.mySelfFloorId = floor.floorId

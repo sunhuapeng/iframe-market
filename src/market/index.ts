@@ -122,7 +122,6 @@ class Market {
                         if (this.loadFloorIndex === datalength) {
                             console.log('楼层加载结束')
                             this.mySelf = createMyPosition(this)
-                            console.log('mySelf', this.mySelf)
                         }
                         this.renderFloor()
                     })
