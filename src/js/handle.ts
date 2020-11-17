@@ -15,6 +15,14 @@ import { GeometryUtils } from "../../node_modules/three/examples/jsm/utils/Geome
 var handleClick = function (event, _this) {
   _this.mouse.x = (event.clientX / document.body.offsetWidth) * 2 - 1;
   _this.mouse.y = -(event.clientY / document.body.offsetHeight) * 2 + 1;
+
+  if (event.touches) {
+    _this.mouse.x = (event.touches[0].pageX / window.innerWidth) * 2 - 1;
+    _this.mouse.y = -(event.touches[0].pageY / window.innerHeight) * 2 + 1;
+  } else {
+    _this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    _this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  }
   var raycaster = new THREE.Raycaster();
   raycaster.setFromCamera(_this.mouse, _this.camera);
   var raylist = raycaster.intersectObjects(_this.floorGroup.children, true);

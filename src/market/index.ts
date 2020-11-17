@@ -68,12 +68,17 @@ class Market {
             var raylist = raycaster.intersectObjects(this.floorGroup.children, true);
             if (raylist[0]) {
                 // console.log(raylist[0].object)
-                let cp = new THREE.Vector3
+                let cp = new THREE.Vector3()
                 this.$getBox.getbox(raylist[0].object).getCenter(cp)
                 let x = Math.floor(cp.x)
                 let y = Math.floor(cp.z)
                 // console.log(x, y)
             }
+        })
+        // 移动端touch事件
+        window.addEventListener('touchstart', (event: any)=>{
+            const _this = this
+            handleClick(event, _this)
         })
         window.addEventListener('mouseup', (event: any) => {
             if (event.layerX === this.layerX && event.layerY === this.layerY) {
