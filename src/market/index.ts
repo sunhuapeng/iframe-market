@@ -54,7 +54,6 @@ class Market {
         await this.getFloor()
         await this.getMember()
         await this.getElevaor()
-        console.log('楼层数据', this.floorData)
         // 计算每层楼之间的距离
         this.floorHeight = window.innerHeight / Math.max(10, this.floorData.length)
         this.renderFloor()
@@ -125,8 +124,8 @@ class Market {
                         this.bindMember(scene)
                         this.loadFloorIndex++
                         if (this.loadFloorIndex === datalength) {
-                            console.log('楼层加载结束')
                             this.mySelf = createMyPosition(this)
+                            this.controls.saveState ()
                         }
                         this.renderFloor()
                     })

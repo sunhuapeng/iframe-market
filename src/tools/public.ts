@@ -58,7 +58,6 @@ export function getTrailPoint(group, _this) {
   let worldVector3 = new THREE.Vector3()
   group.getWorldPosition(worldVector3)
   let y = worldVector3.y
-  console.log(size)
   var maxx = Math.floor(size.x), maxz = Math.floor(size.z)
   const offset = 7
   let hrefX = Math.floor(maxx / 2)
@@ -107,7 +106,6 @@ export function createMyPosition(_this) {
     if(floor.name === 'F2'){
       let index = getRandomInt(0, floor.userData.trailPoint.length)
       let v3 = floor.userData.trailPoint[index]
-      console.log('v3', v3)
         let sprite = create2dImg(v3)
         sprite.name = 'mySelf'
         sprite.mySelfFloorId = floor.floorId

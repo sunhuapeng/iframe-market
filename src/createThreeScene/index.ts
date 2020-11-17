@@ -31,7 +31,6 @@ export function initCamera() {
   // camera = new THREE.OrthographicCamera(width / - 4, width / 4, height / 4, height / - 4, 1, 5000);
   // console.log(a=√2c/2)
   const viewWidth = Math.sqrt(2*height)/2
-  console.log(viewWidth)
   CameraDefaultPosition = new THREE.Vector3(viewWidth + 700, height/2, viewWidth + 700);
   camera.position.copy(CameraDefaultPosition);
   return camera

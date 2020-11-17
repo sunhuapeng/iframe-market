@@ -1,6 +1,6 @@
 // 引入公共样式
 require("../style/index.less");
-require('../js/index.js')
+require('../js/handle-dom.ts')
 // 设置rem比例
 document.documentElement.style.fontSize = Math.min(window.innerWidth, 750) / 750 * 100 + 'px';
 

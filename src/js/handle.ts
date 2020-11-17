@@ -4,15 +4,20 @@ import { memberMaterial, LightMemberMaterial } from '../material/index'
 import { Vector2, Vector3 } from '../../node_modules/three/src/Three';
 import { threadId } from 'worker_threads';
 
+import { GetFloor, GetMember } from '../api/requery'
 
 import { Line2 } from "../../node_modules/three/examples/jsm/lines/Line2.js";
 
+import { showMessage } from '../js/handle-dom'
 // import { Line2 } from "./jsm/lines/Line2.js";
 import { LineMaterial } from "../../node_modules/three/examples/jsm/lines/LineMaterial.js";
 import { LineGeometry } from "../../node_modules/three/examples/jsm/lines/LineGeometry.js";
 import { GeometryUtils } from "../../node_modules/three/examples/jsm/utils/GeometryUtils.js";
 
 var handleClick = function (event, _this) {
+  if ((window as any).unRay) {
+    return
+  }
   _this.mouse.x = (event.clientX / document.body.offsetWidth) * 2 - 1;
   _this.mouse.y = -(event.clientY / document.body.offsetHeight) * 2 + 1;
 
@@ -28,27 +33,171 @@ var handleClick = function (event, _this) {
   var raylist = raycaster.intersectObjects(_this.floorGroup.children, true);
   if (raylist[0]) {
     let obj = raylist[0].object
+
+    let handleState = (window as any).$handleState
+    // 处理轨迹
+    if (handleState === 'trail') {
+      handleTrail(obj, _this)
+    } else if (handleState === 'floor') {
+      let obj = raylist[0].object.parent
+      handleFloor(_this, obj)
+    } else if (handleState === 'member') {
+      let obj = raylist[0].object
+      handleMember(_this, obj)
+    }
+  }
+}
+function handleMember(_this, obj) {
+  console.log(obj)
+  let memberId = obj.memberId
+  if (memberId) {
+    let memberName = '';
+    let floorName = ''; // 楼层名称
+    let format = 0 // 业态
+    let d = obj.userData.data
+    if (d) {
+      memberName = d.name
+      floorName = d.floorname
+      format = d.format
+      showMessage(`
+      <p>店铺名称：${memberName}</p>
+      <br />
+      <p>店铺业态：${format}</p>
+      <br />
+      <p>所在楼层：${floorName}</p>
+      `)
+    }
+  } else {
+    console.log(obj.parent)
+    showMessage(`
+      <p style="text-align: center;">未入驻</p>
+      <br />
+      <p>所在楼层：${obj.parent.name}</p>
+      `)
+  }
+}
+function handleFloor(_this, obj) {
+  if (obj.floorId) {
+    let memberCount = 0 // 店铺数
+    let eleCount = 0 // 电梯数
+    let floorName = obj.name // 楼层名称
+    let memberList = []
+    _this.memberData.forEach(item => {
+      if (item.floorid === obj.floorId) {
+        memberCount++
+        memberList.push(item.name)
+      }
+    })
+    _this.elevatorData.forEach(item => {
+      if (item.floorid === obj.floorId) {
+        eleCount++
+      }
+    })
+    showMessage(`
+    <p>楼层名称：${floorName}</p>
+    <br />
+    <p>商铺：共${memberCount}个</p>
+    <br />
+    <p style="font-size: 12px;margin-left: 48px;">${memberList.length !== 0 ? memberList.join('、') : '-'}</p>
+    <br />
+    <p>电梯：共${eleCount}个</p>
+    `)
+  }
+}
+function handleTrail(obj, _this) {
+  // 可行走矩阵
+  if (obj.memberId) {
     let mySelfPosition = new THREE.Vector3()
     _this.mySelf.getWorldPosition(mySelfPosition)
-    console.log('mySelfPosition', mySelfPosition)
-    // 可行走矩阵
-    if (obj.memberId) {
-      const memberFloorId = obj.parent.floorId
-      const mySelfFloorId = _this.mySelf.mySelfFloorId
-      // 相同楼层
-      let trail = []
-      if (mySelfFloorId === memberFloorId) {
-        trail = gettrail(mySelfPosition, obj)
-        if (trail.length === 0) {
-          // 需要记录进店前的终点，作为下一次出发的起点，
-          // 代码需要重新整理
+    const memberFloorId = obj.parent.floorId
+    const mySelfFloorId = _this.mySelf.mySelfFloorId
+    // 相同楼层
+    let trail = []
+    if (mySelfFloorId === memberFloorId) {
+      trail = gettrail(mySelfPosition, obj)
+      if (trail.length === 0) {
+        // 需要记录进店前的终点，作为下一次出发的起点，
+        // 代码需要重新整理
+        alert('你无路可逃')
+        return
+      }
+      let memberCp = v2tov3(obj.cp, obj.parent.getWorldPosition().y)
+      let endToPcTrail = getEndToPc(trail[trail.length - 1], memberCp)
+      let allTrail = trail.concat(endToPcTrail)
+      Drawline(_this, allTrail)
+      // var geometry = new THREE.BufferGeometry().setFromPoints(allTrail);
+      // var material = new THREE.LineBasicMaterial({
+      //   color: '#f14f54'
+      // });
+      // var line = new THREE.Line(geometry, material);
+      // _this.scene.add(line)
+      headerMove(allTrail, _this.mySelf)
+
+    } else {
+      // 找到最近的电梯
+      // 获取头像所在楼层
+      const headerFloor = _this.scene.getObjectByProperty('floorId', _this.mySelf.mySelfFloorId)
+      let minEle = null
+      let minLen = 9999
+      let eleCp = new Vector3()
+      let eleVector3 = new Vector3()
+      let floorPosition = new THREE.Vector3() as any
+      headerFloor.children.forEach((mesh, index) => {
+        // 找到所有电梯
+        if (mesh.elevatorId) {
+          // 获取电梯中心点
+          eleCp = v2tov3(mesh.cp, mesh.getWorldPosition(new Vector3()).y)
+          let len = eleCp.distanceTo(mySelfPosition)
+          if (minLen > len) {
+            minLen = len
+            minEle = mesh
+            mesh.getWorldPosition(floorPosition)
+            eleVector3 = eleCp
+          }
+        }
+      })
+      if (minEle) {
+        // 第一阶段轨迹
+        let trailFirst = gettrail(mySelfPosition, minEle)
+        // 获取第二段轨迹（上电梯）
+        let firstEleFloor = eleVector3
+
+        let endEleFloor = new THREE.Vector3()
+        // 获取重点楼层的Y
+        obj.parent.getWorldPosition(endEleFloor)
+        _this.mySelf.mySelfFloorId = obj.parent.floorId
+        // 获取到第二段结束的点
+        let endPoint = firstEleFloor.clone().setY(endEleFloor.y)
+
+        let trailSecond = getEndToPc(firstEleFloor, endPoint)
+
+
+
+        let points = obj.parent.userData.trailPoint
+        // 寻找距离电梯上来后的最近可以行走的点
+        let minPoint = null
+        let minLen = 99999
+        for (let i = 0; i < points.length; i++) {
+          let p = points[i]
+          let len = endPoint.distanceTo(p)
+          if (len < minLen) {
+            minLen = len
+            minPoint = p
+          }
+        }
+        // 获取电梯到店铺最近点的
+        let trailThird = gettrail(minPoint, obj)
+        // let lastTrail 
+        // 获取店铺最近点到店铺中心的路径
+        let lastTrail = getEndToPc(trailThird[trailThird.length - 1], v2tov3(obj.cp, obj.getWorldPosition(new THREE.Vector3()).y))
+
+        if (trailFirst.length === 0 || trailSecond === 0 || trailThird.length === 0 || lastTrail.length === 0) {
           alert('你无路可逃')
           return
         }
-        let memberCp = v2tov3(obj.cp, obj.parent.getWorldPosition().y)
-        let endToPcTrail = getEndToPc(trail[trail.length - 1], memberCp)
-        let allTrail = trail.concat(endToPcTrail)
-        console.log(allTrail)
+
+        let allTrail = trailFirst.concat(trailSecond).concat(trailThird).concat(lastTrail)
+        headerMove(allTrail, _this.mySelf)
         Drawline(_this, allTrail)
         // var geometry = new THREE.BufferGeometry().setFromPoints(allTrail);
         // var material = new THREE.LineBasicMaterial({
@@ -56,91 +205,16 @@ var handleClick = function (event, _this) {
         // });
         // var line = new THREE.Line(geometry, material);
         // _this.scene.add(line)
-        headerMove(allTrail, _this.mySelf)
-
-      } else {
-        // 找到最近的电梯
-        // 获取头像所在楼层
-        const headerFloor = _this.scene.getObjectByProperty('floorId', _this.mySelf.mySelfFloorId)
-        let minEle = null
-        let minLen = 9999
-        let eleCp = new Vector3()
-        let eleVector3 = new Vector3()
-        let floorPosition = new THREE.Vector3() as any
-        headerFloor.children.forEach((mesh, index) => {
-          // 找到所有电梯
-          if (mesh.elevatorId) {
-            // 获取电梯中心点
-            eleCp = v2tov3(mesh.cp, mesh.getWorldPosition(new Vector3()).y)
-            let len = eleCp.distanceTo(mySelfPosition)
-            if (minLen > len) {
-              minLen = len
-              minEle = mesh
-              mesh.getWorldPosition(floorPosition)
-              eleVector3 = eleCp
-            }
-          }
-        })
-        if (minEle) {
-          // 第一阶段轨迹
-          let trailFirst = gettrail(mySelfPosition, minEle)
-          console.log('第一段')
-          // 获取第二段轨迹（上电梯）
-          let firstEleFloor = eleVector3
-
-          let endEleFloor = new THREE.Vector3()
-          // 获取重点楼层的Y
-          obj.parent.getWorldPosition(endEleFloor)
-          _this.mySelf.mySelfFloorId = obj.parent.floorId
-          // 获取到第二段结束的点
-          let endPoint = firstEleFloor.clone().setY(endEleFloor.y)
-
-          let trailSecond = getEndToPc(firstEleFloor, endPoint)
-
-
-
-          let points = obj.parent.userData.trailPoint
-          // 寻找距离电梯上来后的最近可以行走的点
-          let minPoint = null
-          let minLen = 99999
-          for (let i = 0; i < points.length; i++) {
-            let p = points[i]
-            let len = endPoint.distanceTo(p)
-            if (len < minLen) {
-              minLen = len
-              minPoint = p
-            }
-          }
-          // 获取电梯到店铺最近点的
-          let trailThird = gettrail(minPoint, obj)
-          // let lastTrail 
-          // 获取店铺最近点到店铺中心的路径
-          let lastTrail = getEndToPc(trailThird[trailThird.length - 1], v2tov3(obj.cp, obj.getWorldPosition(new THREE.Vector3()).y))
-
-          if (trailFirst.length === 0 || trailSecond === 0 || trailThird.length === 0 || lastTrail.length === 0) {
-            alert('你无路可逃')
-            return
-          }
-
-          let allTrail = trailFirst.concat(trailSecond).concat(trailThird).concat(lastTrail)
-          headerMove(allTrail, _this.mySelf)
-          Drawline(_this, allTrail)
-          // var geometry = new THREE.BufferGeometry().setFromPoints(allTrail);
-          // var material = new THREE.LineBasicMaterial({
-          //   color: '#f14f54'
-          // });
-          // var line = new THREE.Line(geometry, material);
-          // _this.scene.add(line)
-        }
       }
-
-    } else {
-      let cp = new THREE.Vector3
-      _this.$getBox.getbox(obj).getCenter(cp)
-      let x = Math.floor(cp.x)
-      let y = Math.floor(cp.z)
     }
+
+  } else {
+    let cp = new THREE.Vector3
+    _this.$getBox.getbox(obj).getCenter(cp)
+    let x = Math.floor(cp.x)
+    let y = Math.floor(cp.z)
   }
+
 }
 function Drawline(_this, points) {
 
